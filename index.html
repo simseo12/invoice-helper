@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>입고 도우미</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', 'Noto Sans KR', sans-serif;
+      background: #070c18;
+      color: #e8eaf2;
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    :root {
+      --bg-primary:    #070c18;
+      --bg-secondary:  #0d1526;
+      --bg-card:       rgba(255,255,255,0.04);
+      --bg-input:      rgba(255,255,255,0.06);
+      --border:        rgba(255,255,255,0.08);
+      --gold:          #d4a843;
+      --gold-light:    #f0c96e;
+      --gold-dark:     #b8912e;
+      --gold-glow:     rgba(212,168,67,0.15);
+      --text-primary:  #e8eaf2;
+      --text-secondary:#8892a4;
+      --text-muted:    #4a5568;
+      --success:       #4ecb8d;
+      --error:         #ff6b6b;
+      --radius-lg:     20px;
+      --radius:        14px;
+      --radius-sm:     8px;
+      --shadow:        0 8px 40px rgba(0,0,0,0.5);
+      --shadow-gold:   0 0 24px rgba(212,168,67,0.2);
+      --transition:    all 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -30%; left: 50%;
+      transform: translateX(-50%);
+      width: 900px; height: 500px;
+      background: radial-gradient(ellipse, rgba(212,168,67,0.07) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ===== HEADER ===== */
+    header { position: relative; z-index: 1; text-align: center; padding: 52px 24px 32px; }
+    .header-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, rgba(212,168,67,0.15), rgba(212,168,67,0.05));
+      border: 1px solid rgba(212,168,67,0.25);
+      border-radius: 100px; padding: 6px 18px;
+      font-size: 12px; font-weight: 500; color: var(--gold);
+      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 20px;
+    }
+    .header-badge span { font-size: 14px; }
+    h1 {
+      font-size: clamp(28px,5vw,44px); font-weight: 700;
+      background: linear-gradient(135deg, #fff 30%, var(--gold-light) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; letter-spacing: -0.5px; margin-bottom: 10px;
+    }
+    .header-sub { color: var(--text-secondary); font-size: 15px; font-weight: 300; }
+
+    /* ===== LAYOUT ===== */
+    .container { position: relative; z-index: 1; max-width: 1000px; margin: 0 auto; padding: 0 20px 80px; }
+
+    /* ===== TAB NAV ===== */
+    .tab-nav {
+      display: flex; gap: 6px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 6px; margin-bottom: 32px;
+      backdrop-filter: blur(12px);
+    }
+    .tab-btn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 12px 10px; border: none; border-radius: calc(var(--radius-lg) - 4px);
+      background: transparent; color: var(--text-secondary);
+      font-family: inherit; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: var(--transition); white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      color: #0a0c14; font-weight: 700; box-shadow: var(--shadow-gold);
+    }
+    .tab-btn .icon { font-size: 16px; }
+    .tab-panel { display: none; animation: fadeIn 0.3s ease; }
+    .tab-panel.active { display: block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ===== CARD ===== */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 28px;
+      backdrop-filter: blur(20px); transition: var(--transition);
+    }
+    .card:hover { border-color: rgba(212,168,67,0.15); }
+    .card + .card { margin-top: 20px; }
+    .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .card-icon {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .card-title { font-size: 17px; font-weight: 600; color: var(--text-primary); }
+    .card-desc  { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* ===== FORMS ===== */
+    label {
+      display: block; font-size: 12px; font-weight: 600;
+      letter-spacing: 0.07em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 8px;
+    }
+    textarea, input[type="number"], input[type="text"] {
+      width: 100%; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text-primary);
+      font-family: inherit; font-size: 15px; transition: var(--transition); outline: none;
+    }
+    textarea:focus, input:focus {
+      border-color: var(--gold-dark); background: rgba(212,168,67,0.05);
+      box-shadow: 0 0 0 3px rgba(212,168,67,0.1);
+    }
+    textarea { padding: 16px; resize: vertical; min-height: 120px; line-height: 1.7; }
+    input[type="number"], input[type="text"] { padding: 13px 18px; }
+    input[type="number"] { -moz-appearance: textfield; }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    select {
+      width: 100%; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text-primary);
+      font-family: inherit; font-size: 14px; padding: 13px 38px 13px 14px;
+      outline: none; transition: var(--transition); cursor: pointer;
+      -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 13px center;
+    }
+    select:focus { border-color: var(--gold-dark); }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 13px 24px; border: none; border-radius: var(--radius);
+      font-family: inherit; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: var(--transition); letter-spacing: 0.02em;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--gold-dark), var(--gold)); color: #0a0c14; }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(212,168,67,0.35); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-ghost { background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text-secondary); }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+    .btn-sm { padding: 8px 16px; font-size: 13px; }
+    .btn-danger { background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.2); color: var(--error); }
+    .btn-danger:hover { background: rgba(255,107,107,0.2); }
+
+    /* Spinner */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(212,168,67,0.2); border-top-color: var(--gold);
+      border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== TRANSLATION PANEL ===== */
+    .translate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 580px) { .translate-grid { grid-template-columns: 1fr; } }
+    .translate-box { position: relative; }
+    .translate-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .lang-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 100px; letter-spacing: 0.06em; }
+    .lang-badge.ko { background: rgba(99,179,237,0.15); color: #63b3ed; border: 1px solid rgba(99,179,237,0.2); }
+    .lang-badge.en { background: rgba(212,168,67,0.15); color: var(--gold); border: 1px solid rgba(212,168,67,0.2); }
+    .translate-actions { display: flex; gap: 10px; margin-top: 16px; align-items: center; flex-wrap: wrap; }
+    .result-area {
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px; min-height: 120px;
+      font-size: 15px; line-height: 1.7; color: var(--text-primary);
+      position: relative; white-space: pre-wrap; word-break: break-word;
+    }
+    .result-area.empty { color: var(--text-muted); font-style: italic; }
+    .result-area.loading { display: flex; align-items: center; gap: 10px; color: var(--text-secondary); }
+    .copy-btn-inline {
+      position: absolute; top: 10px; right: 10px;
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 10px; background: rgba(255,255,255,0.07);
+      border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text-secondary); font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: var(--transition); font-family: inherit;
+    }
+    .copy-btn-inline:hover { background: rgba(212,168,67,0.15); color: var(--gold); }
+    .copy-btn-inline.copied { background: rgba(78,203,141,0.15); color: var(--success); }
+
+    /* ===== 입고리스트 TABLE ===== */
+    .list-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 4px;
+    }
+    .list-table {
+      width: 100%; border-collapse: collapse; min-width: 720px;
+    }
+    .list-table thead tr {
+      background: rgba(212,168,67,0.08);
+      border-bottom: 1px solid rgba(212,168,67,0.2);
+    }
+    .list-table th {
+      padding: 12px 14px; text-align: left;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--gold);
+      white-space: nowrap;
+    }
+    .th-sub { font-weight: 400; color: var(--text-muted); text-transform: none; letter-spacing: 0; margin-left: 4px; }
+    .list-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    .list-table tbody tr:last-child { border-bottom: none; }
+    .list-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+    .list-table td { padding: 10px 10px; vertical-align: top; }
+    .list-table td:first-child { padding-left: 14px; width: 36px; text-align: center; }
+    .list-table td:last-child { padding-right: 14px; width: 40px; }
+    .row-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(212,168,67,0.1); border: 1px solid rgba(212,168,67,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--gold);
+      margin: 8px auto 0;
+    }
+
+    /* inline cell inputs */
+    .cell-input {
+      width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius-sm); color: var(--text-primary);
+      font-family: inherit; font-size: 13px; padding: 8px 10px;
+      outline: none; transition: var(--transition);
+    }
+    .cell-input:focus {
+      border-color: var(--gold-dark); background: rgba(212,168,67,0.05);
+      box-shadow: 0 0 0 2px rgba(212,168,67,0.1);
+    }
+    .cell-input.wide { min-width: 160px; }
+    .cell-input.narrow { width: 80px; }
+
+    /* composition cell */
+    .comp-cell { display: flex; flex-direction: column; gap: 5px; min-width: 180px; }
+    .comp-en {
+      font-size: 11px; color: var(--gold); font-weight: 500;
+      padding: 4px 8px; background: rgba(212,168,67,0.06);
+      border: 1px solid rgba(212,168,67,0.12); border-radius: 4px;
+      min-height: 24px; line-height: 1.4; word-break: break-word;
+    }
+    .comp-en.empty { color: var(--text-muted); font-style: italic; font-weight: 400; }
+
+    /* YD→M 원본 표시 */
+    .yd-note {
+      display: none; font-size: 11px; color: var(--gold);
+      margin-top: 4px; padding: 3px 7px;
+      background: rgba(212,168,67,0.06); border-radius: 4px;
+      border: 1px solid rgba(212,168,67,0.12);
+    }
+
+    /* 행 소계 표시 */
+    .row-subtotal {
+      display: none; font-size: 11px; color: var(--success); font-weight: 600;
+      margin-top: 5px; padding: 3px 7px;
+      background: rgba(78,203,141,0.06); border-radius: 4px;
+      border: 1px solid rgba(78,203,141,0.15);
+    }
+
+    /* weight cell */
+    .weight-cell { display: flex; gap: 6px; align-items: center; }
+    .weight-cell input { width: 80px; }
+    .weight-unit-select {
+      width: 58px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius-sm); color: var(--text-secondary);
+      font-family: inherit; font-size: 12px; padding: 8px 6px;
+      outline: none; cursor: pointer; -webkit-appearance: none; appearance: none;
+      text-align: center;
+    }
+    .weight-unit-select:focus { border-color: var(--gold-dark); }
+
+    /* unit cell — YD→M indicator */
+    .unit-cell { position: relative; }
+    .unit-converted-badge {
+      display: none; position: absolute; top: -6px; right: -6px;
+      background: rgba(78,203,141,0.9); color: #0a0e1a;
+      font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 100px;
+    }
+
+    /* ===== TOTAL BAR ===== */
+    .total-bar {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 10px 20px;
+      background: rgba(212,168,67,0.06); border: 1px solid rgba(212,168,67,0.2);
+      border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 700; color: var(--text-muted);
+      transition: var(--transition);
+    }
+    .total-bar.has-value { color: var(--success); border-color: rgba(78,203,141,0.3); background: rgba(78,203,141,0.06); }
+
+    /* ===== RESULT OUTPUT ===== */
+    .section-label {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--gold);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .output-result {
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px;
+      font-size: 13px; font-family: 'Courier New', monospace; line-height: 1.8;
+      color: var(--text-primary); white-space: pre; overflow-x: auto;
+      min-height: 80px; position: relative;
+    }
+    .output-result.empty { color: var(--text-muted); font-style: italic; font-family: inherit; white-space: normal; }
+
+    /* ===== TOAST ===== */
+    #toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(20,30,55,0.95); border: 1px solid rgba(212,168,67,0.3);
+      color: var(--text-primary); padding: 12px 22px; border-radius: 100px;
+      font-size: 13px; font-weight: 500; opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+      z-index: 999; pointer-events: none; backdrop-filter: blur(20px);
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(212,168,67,0.4); }
+
+    @media (max-width: 640px) {
+      .card { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-badge"><span>📦</span> 입고 도우미</div>
+    <h1>입고 관리 도구</h1>
+    <p class="header-sub">번역 · 입고리스트 영문 변환 · 단위 자동 변환 · 무게 합계</p>
+  </header>
+
+  <div class="container">
+
+    <!-- TAB NAV -->
+    <nav class="tab-nav" role="tablist">
+      <button class="tab-btn active" id="tab-translate" role="tab" aria-selected="true" onclick="switchTab('translate')">
+        <span class="icon">🌐</span> 번역
+      </button>
+      <button class="tab-btn" id="tab-list" role="tab" aria-selected="false" onclick="switchTab('list')">
+        <span class="icon">📦</span> 입고리스트
+      </button>
+    </nav>
+
+    <!-- ===== TAB 1: TRANSLATE ===== -->
+    <div class="tab-panel active" id="panel-translate">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">🌐</div>
+          <div>
+            <div class="card-title">한글 → 영문 번역</div>
+            <div class="card-desc">인보이스용 텍스트를 영문으로 번역합니다 (Ctrl+Enter)</div>
+          </div>
+        </div>
+        <div class="translate-grid">
+          <div class="translate-box">
+            <div class="translate-label-row">
+              <label for="input-ko" style="margin:0">입력</label>
+              <span class="lang-badge ko">KO 한국어</span>
+            </div>
+            <textarea id="input-ko" placeholder="번역할 한글을 입력하세요&#10;예) 면 100% 티셔츠, 수량 500개, 단가 3.50달러" spellcheck="false"></textarea>
+          </div>
+          <div class="translate-box">
+            <div class="translate-label-row">
+              <label style="margin:0">번역 결과</label>
+              <span class="lang-badge en">EN 영어</span>
+            </div>
+            <div class="result-area empty" id="result-en">
+              번역 결과가 여기에 표시됩니다
+              <button class="copy-btn-inline" id="copy-translate-btn" onclick="copyTranslation()" style="display:none">📋 복사</button>
+            </div>
+          </div>
+        </div>
+        <div class="translate-actions">
+          <button class="btn btn-primary" id="translate-btn" onclick="doTranslate()"><span>🔄</span> 번역하기</button>
+          <button class="btn btn-ghost" onclick="clearTranslate()"><span>🗑️</span> 초기화</button>
+          <span id="char-count" style="font-size:12px;color:var(--text-muted);margin-left:auto">0 / 5,000자</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TAB 2: 입고리스트 ===== -->
+    <div class="tab-panel" id="panel-list">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon">📦</div>
+          <div>
+            <div class="card-title">입고리스트</div>
+            <div class="card-desc">성분 한글 자동 영문 변환 · YD 입력 시 M 자동 변환 · 무게 합계 자동 계산</div>
+          </div>
+        </div>
+
+        <div class="list-table-wrap">
+          <table class="list-table">
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>성분 <span class="th-sub">Composition</span></th>
+                <th>규격 <span class="th-sub">Spec</span></th>
+                <th>입고량 <span class="th-sub">Qty</span></th>
+                <th>단위 <span class="th-sub">Unit</span></th>
+                <th>1개 무게 <span class="th-sub">Unit Wt</span></th>
+                <th>무게(총) <span class="th-sub">Total Wt</span></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="list-tbody"></tbody>
+          </table>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:12px">
+          <button class="btn btn-ghost btn-sm" onclick="addRow()">＋ 행 추가</button>
+          <div class="total-bar" id="total-bar">⚖️ 총 무게: — kg</div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--border);margin:24px 0" />
+
+        <div class="section-label" style="margin-bottom:12px">📋 영문 결과</div>
+        <div class="output-result empty" id="list-result">입고리스트를 입력 후 [결과 생성]을 누르세요</div>
+        <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="generateResult()">✨ 결과 생성</button>
+          <button class="btn btn-ghost" id="copy-result-btn" onclick="copyResult()">📋 복사</button>
+          <button class="btn btn-ghost" onclick="clearList()" style="margin-left:auto">🗑️ 초기화</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+  /* =============================================
+     TAB SWITCHING
+  ============================================= */
+  function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    document.getElementById('tab-' + name).setAttribute('aria-selected', 'true');
+    document.getElementById('panel-' + name).classList.add('active');
+  }
+
+  /* =============================================
+     TRANSLATE
+  ============================================= */
+  const inputKo      = document.getElementById('input-ko');
+  const resultEn     = document.getElementById('result-en');
+  const charCount    = document.getElementById('char-count');
+  const copyBtn      = document.getElementById('copy-translate-btn');
+  const translateBtn = document.getElementById('translate-btn');
+
+  inputKo.addEventListener('input', () => {
+    const len = inputKo.value.length;
+    charCount.textContent = `${len.toLocaleString()} / 5,000자`;
+    charCount.style.color = len > 4500 ? '#ff6b6b' : 'var(--text-muted)';
+  });
+
+  async function doTranslate() {
+    const text = inputKo.value.trim();
+    if (!text) { showToast('번역할 텍스트를 입력해주세요'); return; }
+    if (text.length > 5000) { showToast('5,000자 이하로 입력해주세요'); return; }
+    translateBtn.disabled = true;
+    translateBtn.innerHTML = '<span class="spinner"></span> 번역 중...';
+    resultEn.className = 'result-area loading';
+    resultEn.innerHTML = '<div class="spinner"></div> 번역 중입니다...';
+    copyBtn.style.display = 'none';
+    try {
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ko|en`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.responseStatus === 200) {
+        const translated = data.responseData.translatedText;
+        resultEn.className = 'result-area';
+        resultEn.innerHTML = '';
+        resultEn.appendChild(document.createTextNode(translated));
+        copyBtn.style.display = 'flex';
+        resultEn.appendChild(copyBtn);
+      } else { throw new Error(); }
+    } catch {
+      resultEn.className = 'result-area empty';
+      resultEn.textContent = '번역에 실패했습니다. 잠시 후 다시 시도해주세요.';
+      showToast('⚠️ 번역 오류 — 네트워크를 확인해주세요');
+    } finally {
+      translateBtn.disabled = false;
+      translateBtn.innerHTML = '<span>🔄</span> 번역하기';
+    }
+  }
+
+  function copyTranslation() {
+    const text = resultEn.childNodes[0]?.textContent || resultEn.textContent;
+    if (!text.trim()) return;
+    navigator.clipboard.writeText(text.trim()).then(() => {
+      copyBtn.classList.add('copied'); copyBtn.textContent = '✓ 복사됨';
+      setTimeout(() => { copyBtn.classList.remove('copied'); copyBtn.innerHTML = '📋 복사'; }, 2000);
+      showToast('📋 클립보드에 복사되었습니다');
+    });
+  }
+
+  inputKo.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') doTranslate();
+  });
+
+  function clearTranslate() {
+    inputKo.value = '';
+    resultEn.className = 'result-area empty';
+    resultEn.textContent = '번역 결과가 여기에 표시됩니다';
+    if (copyBtn.parentNode === resultEn) resultEn.removeChild(copyBtn);
+    copyBtn.style.display = 'none';
+    charCount.textContent = '0 / 5,000자';
+  }
+
+  /* =============================================
+     성분 (COMPOSITION) DICTIONARY
+  ============================================= */
+  const COMP_DICT = [
+    // 길이 순 (긴 것 먼저 매칭)
+    ['폴리에스터', 'Polyester'],
+    ['스판덱스',   'Spandex'],
+    ['비스코스',   'Viscose'],
+    ['리오셀',     'Lyocell'],
+    ['캐시미어',   'Cashmere'],
+    ['라이크라',   'Lycra'],
+    ['앙고라',     'Angora'],
+    ['알파카',     'Alpaca'],
+    ['아크릴',     'Acrylic'],
+    ['대나무',     'Bamboo'],
+    ['코튼',       'Cotton'],
+    ['나일론',     'Nylon'],
+    ['텐셀',       'Tencel'],
+    ['모달',       'Modal'],
+    ['헴프',       'Hemp'],
+    ['울',         'Wool'],
+    ['면',         'Cotton'],
+    ['견',         'Silk'],
+    ['폴리',       'Polyester'],
+    ['린넨',       'Linen'],
+    ['실크',       'Silk'],
+    ['레이온',     'Rayon'],
+    ['스판',       'Spandex'],
+    ['양모',       'Wool'],
+  ];
+
+  function translateComp(text) {
+    if (!text.trim()) return '';
+    let result = text;
+    for (const [ko, en] of COMP_DICT) {
+      result = result.replace(new RegExp(ko, 'g'), en);
+    }
+    // 숫자 뒤에 % 없으면 추가
+    result = result.replace(/(\d+(?:\.\d+)?)(?!\s*%)/g, '$1%');
+    // 정리
+    result = result.replace(/\s+/g, ' ').trim();
+    return result;
+  }
+
+  /* =============================================
+     입고리스트
+  ============================================= */
+  let rowCount = 0;
+
+  function addRow() {
+    rowCount++;
+    const id = rowCount;
+    const tbody = document.getElementById('list-tbody');
+    const tr = document.createElement('tr');
+    tr.id = `row-${id}`;
+    tr.innerHTML = `
+      <td><div class="row-num">${id}</div></td>
+      <td>
+        <div class="comp-cell">
+          <input type="text" class="cell-input wide comp-ko" id="comp-ko-${id}" data-row="${id}"
+            placeholder="예) 면 100" autocomplete="off"
+            oninput="onCompInput(${id})" />
+          <div class="comp-en empty" id="comp-en-${id}">영문 변환 결과</div>
+        </div>
+      </td>
+      <td>
+        <input type="text" class="cell-input wide" id="spec-${id}" placeholder="예) 110*150cm 또는 62&quot;" oninput="onCompInput(${id})" />
+      </td>
+      <td>
+        <input type="number" class="cell-input narrow" id="qty-${id}" data-row="${id}"
+          placeholder="0" min="0" step="any" oninput="updateRowTotal(${id})" />
+        <div class="yd-note" id="yd-note-${id}"></div>
+      </td>
+      <td>
+        <div class="unit-cell">
+          <input type="text" class="cell-input narrow" id="unit-${id}" data-row="${id}"
+            placeholder="YD/M/PC" autocomplete="off"
+            onblur="onUnitBlur(${id})" oninput="clearConvertedBadge(${id})" />
+          <span class="unit-converted-badge" id="unit-badge-${id}">변환됨</span>
+        </div>
+      </td>
+      <td>
+        <div class="weight-cell">
+          <input type="number" class="cell-input" id="uwt-${id}" data-row="${id}"
+            placeholder="0" min="0" step="any"
+            style="width:80px" oninput="updateRowTotal(${id})" />
+          <select class="weight-unit-select" id="uwunit-${id}" onchange="updateRowTotal(${id})">
+            <option value="g">g</option>
+            <option value="kg">kg</option>
+          </select>
+        </div>
+        <div class="row-subtotal" id="subtotal-${id}"></div>
+      </td>
+      <td>
+        <div class="weight-cell">
+          <input type="number" class="cell-input row-weight" id="weight-${id}" data-row="${id}"
+            placeholder="0" min="0" step="any" oninput="updateTotal()" />
+          <select class="weight-unit-select" id="wunit-${id}" onchange="updateTotal()">
+            <option value="g">g</option>
+            <option value="kg">kg</option>
+          </select>
+        </div>
+      </td>
+      <td style="text-align:center;padding-top:14px">
+        <button class="btn btn-danger btn-sm" onclick="removeRow(${id})" title="삭제"
+          style="padding:6px 10px;font-size:14px;border-radius:8px">✕</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+    tr.querySelector('.comp-ko').focus();
+    updateRowNumbers();
+  }
+
+  function removeRow(id) {
+    const row = document.getElementById(`row-${id}`);
+    if (row) row.remove();
+    updateRowNumbers();
+    updateTotal();
+  }
+
+  function updateRowNumbers() {
+    document.querySelectorAll('#list-tbody tr').forEach((tr, i) => {
+      const numEl = tr.querySelector('.row-num');
+      if (numEl) numEl.textContent = i + 1;
+    });
+  }
+
+  function buildCompDisplay(id) {
+    const koText = document.getElementById(`comp-ko-${id}`)?.value || '';
+    const spec   = document.getElementById(`spec-${id}`)?.value?.trim() || '';
+    let translated = translateComp(koText);
+    if (translated && /\d+"/.test(spec)) {
+      translated = `${translated}, fabric ${spec}`;
+    }
+    return translated;
+  }
+
+  function onCompInput(id) {
+    const enEl   = document.getElementById(`comp-en-${id}`);
+    const translated = buildCompDisplay(id);
+    if (translated) {
+      enEl.textContent = translated;
+      enEl.classList.remove('empty');
+    } else {
+      enEl.textContent = '영문 변환 결과';
+      enEl.classList.add('empty');
+    }
+  }
+
+  function onUnitBlur(id) {
+    const unitInput = document.getElementById(`unit-${id}`);
+    const qtyInput  = document.getElementById(`qty-${id}`);
+    const ydNote    = document.getElementById(`yd-note-${id}`);
+    const val = unitInput.value.trim().toUpperCase();
+    if (val === 'YD') {
+      const qty = parseFloat(qtyInput.value);
+      if (!isNaN(qty) && qty > 0 && ydNote) {
+        const converted = parseFloat((qty * 0.9144).toFixed(4));
+        ydNote.textContent = `→ ${converted} M`;
+        ydNote.style.display = 'block';
+        showToast(`📐 ${qty} YD = ${converted} M`);
+      }
+      // 값/단위는 그대로 유지 (YD 상태로 무게 계산)
+      updateRowTotal(id);
+    }
+  }
+
+  function clearConvertedBadge(id) {
+    const badge  = document.getElementById(`unit-badge-${id}`);
+    const ydNote = document.getElementById(`yd-note-${id}`);
+    if (badge)  badge.style.display  = 'none';
+    if (ydNote) ydNote.style.display = 'none';
+  }
+
+  function updateRowTotal(id) {
+    const qty      = parseFloat(document.getElementById(`qty-${id}`)?.value);
+    const uwt      = parseFloat(document.getElementById(`uwt-${id}`)?.value);
+    const uwunit   = document.getElementById(`uwunit-${id}`)?.value || 'g';
+    const subtotal = document.getElementById(`subtotal-${id}`);
+    if (subtotal) {
+      if (!isNaN(qty) && qty > 0 && !isNaN(uwt) && uwt > 0) {
+        const uwtKg  = uwunit === 'g' ? uwt / 1000 : uwt;
+        const rowKg  = qty * uwtKg;
+        const display = rowKg >= 1
+          ? rowKg.toFixed(3) + ' kg'
+          : (rowKg * 1000).toFixed(1) + ' g (' + rowKg.toFixed(4) + ' kg)';
+        subtotal.textContent = `× ${qty} = ${display}`;
+        subtotal.style.display = 'block';
+      } else {
+        subtotal.style.display = 'none';
+      }
+    }
+    updateTotal();
+  }
+
+  function updateTotal() {
+    let totalKg   = 0;
+    let hasWeight = false;
+    document.querySelectorAll('#list-tbody tr').forEach(tr => {
+      const id = tr.id.replace('row-', '');
+      const qty    = parseFloat(document.getElementById(`qty-${id}`)?.value);
+      const uwt    = parseFloat(document.getElementById(`uwt-${id}`)?.value);
+      const uwunit = document.getElementById(`uwunit-${id}`)?.value || 'g';
+      // 1개 무게 × 입고량 우선 사용
+      if (!isNaN(qty) && qty > 0 && !isNaN(uwt) && uwt > 0) {
+        const uwtKg = uwunit === 'g' ? uwt / 1000 : uwt;
+        totalKg  += qty * uwtKg;
+        hasWeight = true;
+        return;
+      }
+      // 없으면 수동 총 무게 사용
+      const wt    = parseFloat(document.getElementById(`weight-${id}`)?.value);
+      const wunit = document.getElementById(`wunit-${id}`)?.value || 'kg';
+      if (!isNaN(wt) && wt > 0) {
+        totalKg  += wunit === 'g' ? wt / 1000 : wt;
+        hasWeight = true;
+      }
+    });
+    const bar = document.getElementById('total-bar');
+    if (hasWeight) {
+      const display = totalKg >= 1
+        ? totalKg.toLocaleString('ko-KR', { maximumFractionDigits: 3 }) + ' kg'
+        : (totalKg * 1000).toLocaleString('ko-KR', { maximumFractionDigits: 1 }) + ' g → ' +
+          totalKg.toLocaleString('ko-KR', { maximumFractionDigits: 4 }) + ' kg';
+      bar.innerHTML = `⚖️ 총 무게: <strong>${display}</strong>`;
+      bar.classList.add('has-value');
+    } else {
+      bar.innerHTML = '⚖️ 총 무게: — kg';
+      bar.classList.remove('has-value');
+    }
+  }
+
+  function generateResult() {
+    const rows = document.querySelectorAll('#list-tbody tr');
+    if (!rows.length) { showToast('입고리스트를 먼저 입력해주세요'); return; }
+
+    const resultEl = document.getElementById('list-result');
+    let lines = [];
+    let totalKg = 0;
+
+    const COL_WIDTHS = [4, 28, 14, 8, 6, 10];
+    const pad = (str, len) => {
+      const s = String(str ?? '');
+      return s.length >= len ? s.slice(0, len) : s + ' '.repeat(len - s.length);
+    };
+
+    // header
+    const header = [
+      pad('No.', COL_WIDTHS[0]),
+      pad('Composition', COL_WIDTHS[1]),
+      pad('Spec', COL_WIDTHS[2]),
+      pad('Qty', COL_WIDTHS[3]),
+      pad('Unit', COL_WIDTHS[4]),
+      pad('Weight', COL_WIDTHS[5]),
+    ].join('  ');
+    const divider = '-'.repeat(header.length);
+    lines.push(divider);
+    lines.push(header);
+    lines.push(divider);
+
+    rows.forEach((tr, i) => {
+      const id      = tr.id.replace('row-', '');
+      const compKo  = document.getElementById(`comp-ko-${id}`)?.value?.trim() || '';
+      const compEn  = buildCompDisplay(id);
+      const spec    = /\d+"/.test(document.getElementById(`spec-${id}`)?.value?.trim() || '') ? '' : (document.getElementById(`spec-${id}`)?.value?.trim() || '');
+      const qty     = document.getElementById(`qty-${id}`)?.value?.trim() || '';
+      const unit    = document.getElementById(`unit-${id}`)?.value?.trim().toUpperCase() || '';
+      const weight  = document.getElementById(`weight-${id}`)?.value?.trim() || '';
+      const wunit   = document.getElementById(`wunit-${id}`)?.value || 'kg';
+
+      const wVal = parseFloat(weight);
+      let weightDisplay = '';
+      if (!isNaN(wVal) && wVal > 0) {
+        const kg = wunit === 'g' ? wVal / 1000 : wVal;
+        totalKg += kg;
+        weightDisplay = wunit === 'g'
+          ? `${wVal}g (${kg.toLocaleString('en-US', {maximumFractionDigits:4})}kg)`
+          : `${wVal}kg`;
+      }
+
+      lines.push([
+        pad(i + 1, COL_WIDTHS[0]),
+        pad(compEn || compKo, COL_WIDTHS[1]),
+        pad(spec, COL_WIDTHS[2]),
+        pad(qty, COL_WIDTHS[3]),
+        pad(unit, COL_WIDTHS[4]),
+        pad(weightDisplay, COL_WIDTHS[5]),
+      ].join('  '));
+    });
+
+    lines.push(divider);
+
+    if (totalKg > 0) {
+      const totalStr = `Total Weight: ${totalKg.toLocaleString('en-US', { maximumFractionDigits: 3 })} kg`;
+      lines.push(' '.repeat(COL_WIDTHS[0] + 2 + COL_WIDTHS[1] + 2 + COL_WIDTHS[2] + 2 + COL_WIDTHS[3] + 2) + totalStr);
+      lines.push(divider);
+    }
+
+    resultEl.textContent = lines.join('\n');
+    resultEl.classList.remove('empty');
+    showToast('✅ 결과가 생성되었습니다');
+  }
+
+  function copyResult() {
+    const text = document.getElementById('list-result').textContent;
+    if (!text || document.getElementById('list-result').classList.contains('empty')) {
+      showToast('먼저 결과를 생성해주세요');
+      return;
+    }
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copy-result-btn');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✓ 복사됨';
+      btn.style.color = 'var(--success)';
+      setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
+      showToast('📋 클립보드에 복사되었습니다');
+    });
+  }
+
+  function clearList() {
+    document.getElementById('list-tbody').innerHTML = '';
+    rowCount = 0;
+    updateTotal();
+    const resultEl = document.getElementById('list-result');
+    resultEl.textContent = '입고리스트를 입력 후 [결과 생성]을 누르세요';
+    resultEl.classList.add('empty');
+  }
+
+  /* =============================================
+     TOAST
+  ============================================= */
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  /* =============================================
+     INIT — 기본 3행 추가
+  ============================================= */
+  addRow();
+  addRow();
+  addRow();
+  </script>
+</body>
+</html>
